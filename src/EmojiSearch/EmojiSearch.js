@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect } from "react";
 import { useState } from "react";
 import styled from "styled-components";
 import emojiList from "../Json/data.json";
@@ -42,33 +42,56 @@ const EmojiShow = styled("div")`
 `;
 const Input = styled("input")``;
 
+// console.log(emojiList)
 const fillterSearch = (searchValue) => {
   const newArr = [];
   emojiList.filter((element, index) => {
-    element?.keywords?.split(' ')?.forEach((str)=>{
-      if(str.startsWith(searchValue))
-        newArr.push(element);
-    })
+    element?.keywords?.split(" ")?.forEach((str) => {
+      if (str.startsWith(searchValue)) newArr.push(element);
+    });
   });
+  console.log(newArr);
   return newArr;
 };
-const EmojiSearch = () => {
-  const [searchVal, setSearchVal] = useState("");
-  const [emoji, setEmoji] = useState("");
-  const [fillterArr, setFilterArr] = useState(emojiList);
 
-  useEffect(() => {
-    setTimeout(() => {
-      setFilterArr([...fillterSearch(searchVal)]);
-    }, 1000);
-  }, [searchVal]);
+const delay = 400;
+const EmojiSearch = (props) => {
+
+   const [searchVal, setSearchVal] = useState("");
+   const [emoji, setEmoji] = useState("");
+   const [fillterArr, setFilterArr] = useState([]);
+
+
+  const debounce = (func, interval) => {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, interval);
+    };
+  };
+  
+  const onChangeMethod2 = useCallback((val)=>{
+    setSearchVal(val);
+    setFilterArr(fillterSearch(val.toLowerCase()));
+  },[setFilterArr,setSearchVal])
+
+  const onChange = debounce((e) => {
+    onChangeMethod2(e.target.value);
+  }, delay);
+
+  console.log("render the componets");
+ 
+  useEffect(()=>{
+    setFilterArr(emojiList)
+  },[])
   return (
     <Emojisearch>
       <div className="input-container">
-        <input
-          className="input"
-          onChange={(e) => setSearchVal(e.target.value)}
-        />
+        <input className="input" onChange={onChange} />
       </div>
       <EmojiShow>
         {fillterArr?.map((e, i) => {
