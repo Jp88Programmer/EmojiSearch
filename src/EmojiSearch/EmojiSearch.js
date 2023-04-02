@@ -3,7 +3,7 @@ import { useState } from "react";
 import styled from "styled-components";
 import emojiList from "../Json/data.json";
 import NanoCard from "./NanoCard";
-
+console.log(emojiList.length);
 const Emojisearch = styled("div")`
   margin: 100px auto;
   display: flex;
@@ -31,6 +31,14 @@ const Emojisearch = styled("div")`
     border-radius: 50px;
     overflow: scroll;
   }
+  .not-found {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 100px 0px;
+  }
 `;
 const EmojiShow = styled("div")`
   /* display: flex;
@@ -42,13 +50,24 @@ const EmojiShow = styled("div")`
 `;
 const Input = styled("input")``;
 
-// console.log(emojiList)
 const fillterSearch = (searchValue) => {
   const newArr = [];
-  emojiList.filter((element, index) => {
-    element?.keywords?.split(" ")?.forEach((str) => {
-      if (str.startsWith(searchValue)) newArr.push(element);
+  const searchArr = searchValue?.split(" ");
+  let searchlength = searchArr.length;
+  emojiList.forEach((element, index) => {
+    let responseLength = 0;
+    let removeDuplicates = [...new Set(element.keywords.trim().split(" "))];
+    searchArr.forEach((searchvalue) => {
+      removeDuplicates.forEach((keyword) => {
+        if (keyword.indexOf(searchvalue) >= 0) {
+          responseLength++;
+        }
+      });
     });
+
+    if (searchlength <= responseLength) {
+      newArr.push(element);
+    }
   });
   console.log(newArr);
   return newArr;
@@ -56,11 +75,9 @@ const fillterSearch = (searchValue) => {
 
 const delay = 400;
 const EmojiSearch = (props) => {
-
-   const [searchVal, setSearchVal] = useState("");
-   const [emoji, setEmoji] = useState("");
-   const [fillterArr, setFilterArr] = useState([]);
-
+  const [searchVal, setSearchVal] = useState("");
+  const [emoji, setEmoji] = useState("");
+  const [fillterArr, setFilterArr] = useState([]);
 
   const debounce = (func, interval) => {
     let timeout;
@@ -73,31 +90,40 @@ const EmojiSearch = (props) => {
       timeout = setTimeout(later, interval);
     };
   };
-  
-  const onChangeMethod2 = useCallback((val)=>{
-    setSearchVal(val);
-    setFilterArr(fillterSearch(val.toLowerCase()));
-  },[setFilterArr,setSearchVal])
+
+  const onChangeMethod2 = useCallback(
+    (val) => {
+      setSearchVal(val);
+      setFilterArr(fillterSearch(val.toLowerCase()));
+    },
+    [setFilterArr, setSearchVal]
+  );
 
   const onChange = debounce((e) => {
     onChangeMethod2(e.target.value);
   }, delay);
 
-  console.log("render the componets");
- 
-  useEffect(()=>{
-    setFilterArr(emojiList)
-  },[])
   return (
     <Emojisearch>
       <div className="input-container">
         <input className="input" onChange={onChange} />
       </div>
-      <EmojiShow>
-        {fillterArr?.map((e, i) => {
-          return <NanoCard emojiSign={e.symbol} />;
-        })}
-      </EmojiShow>
+      {searchVal === "" ? (
+        <div className="not-found">
+          <h2>Type keyword</h2>
+        </div>
+      ) : (
+        <EmojiShow>
+          {fillterArr?.map((e, i) => {
+            return <NanoCard emojiSign={e.symbol} />;
+          })}
+        </EmojiShow>
+      )}
+      {fillterArr.length === 0 && searchVal !== "" && (
+        <div className="not-found">
+          <h2>No Emoji Found</h2>
+        </div>
+      )}
     </Emojisearch>
   );
 };
